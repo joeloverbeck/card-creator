@@ -77,11 +77,11 @@ def create_card(title, text, image_paths):
         card_image_frame, (card_image_frame_x, card_image_frame_y), card_image_frame
     )
 
-    draw_title(title, width, draw)
+    draw_title(title, image_paths["title_banner_path"], width, card, draw)
 
-    draw_card_description(text, draw)
+    #draw_card_description(text, draw)
 
-    draw_icons(image_paths["icon_paths"], card, height)
+    #draw_icons(image_paths["icon_paths"], card, height)
 
     apply_rounded_corners_to_card(card)
 

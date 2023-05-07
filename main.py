@@ -4,13 +4,14 @@ RAW_IMAGES_DIRECTORY = "raw_images"
 
 
 def main():
-    title = "Sample Card"
-    text = "Card description goes here."
+    title = "Sentient Octopi"
+    text = "What the fuck?! RUN!"
 
     image_paths = {
         "background_image_path": RAW_IMAGES_DIRECTORY + "/background_image.png",
+        "title_banner_path": RAW_IMAGES_DIRECTORY + "/title_banner.png",
         "card_image_path": RAW_IMAGES_DIRECTORY + "/card_image.png",
-        "card_image_frame_path": RAW_IMAGES_DIRECTORY + "/card_image_frame_FINAL.png",
+        "card_image_frame_path": RAW_IMAGES_DIRECTORY + "/card_image_frame.png",
         "icon_paths": [
             RAW_IMAGES_DIRECTORY + "/icon1.png",
             RAW_IMAGES_DIRECTORY + "/icon2.png",

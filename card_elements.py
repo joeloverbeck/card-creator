@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw
 
 from image_utils import convert_image_to_rgba, load_font
 
-title_font = load_font("arial.ttf", 24)
+title_font = load_font("arial.ttf", 30)
 text_font = load_font("arial.ttf", 18)
 
 
@@ -70,7 +70,7 @@ def draw_card_image(card, card_image, width):
     # Resize and position the card_image
     card_image = card_image.resize((width, card_image_height), Image.LANCZOS)
 
-    crop_margin = 0.09
+    crop_margin = 0.07
     crop_x0 = int(card_image.width * crop_margin)
     crop_y0 = int(card_image.height * crop_margin)
     crop_x1 = card_image.width - crop_x0
@@ -81,20 +81,24 @@ def draw_card_image(card, card_image, width):
     card_image_width, card_image_height = card_image.size
     card_image_x = (width - card_image_width) // 2
 
-    card_image_y = 70
+    card_image_y = 60
 
     card.paste(card_image, (card_image_x, card_image_y), card_image)
 
 
-def draw_title(title, width, draw):
+def draw_title(title, title_banner_path, width, card, draw):
     """Draws the title of the card
 
     Parameters
     ----------
     title : str
         The title of the card
+    title_banner_path : str
+        The path to the banner that will be drawn behind the title
     width : int
         The width of the canvas where the title will be drawn
+    card : Image
+        The card where the banner will be drawn
     draw : ImageDraw
         Offers methods related to drawing
     """
@@ -102,21 +106,26 @@ def draw_title(title, width, draw):
     # Add title text
     title_width, title_height = draw.textsize(title, font=title_font)
     title_x = (width - title_width) // 2
-    title_y = 10
+    title_y = 30
 
-    # Draw a lighter rectangle behind the text
-    rectangle_padding = 4
-    rectangle_x0 = title_x - rectangle_padding
-    rectangle_y0 = title_y - rectangle_padding
-    rectangle_x1 = title_x + title_width + rectangle_padding
-    rectangle_y1 = title_y + title_height + rectangle_padding
-    rectangle_color = (230, 230, 230)  # A light gray color
+    # Load the banner image
+    banner_image = Image.open(title_banner_path)
+    banner_image = convert_image_to_rgba(banner_image)
 
-    draw.rectangle(
-        (rectangle_x0, rectangle_y0, rectangle_x1, rectangle_y1), fill=rectangle_color
-    )
+    # Resize the banner image based on the width of the title text
+    banner_padding = 30
+    banner_width = title_width + 2 * banner_padding
+    banner_height = title_height + 2 * banner_padding
+    banner_image = banner_image.resize((banner_width, banner_height), Image.LANCZOS)
 
-    draw.text((title_x, 10), title, font=title_font, fill="black")
+    # Calculate the position of the banner image
+    banner_x = title_x - banner_padding
+    banner_y = title_y - banner_padding
+
+    # Draw the banner image
+    card.paste(banner_image, (banner_x, banner_y), banner_image)
+
+    draw.text((title_x, title_y), title, font=title_font, fill="white")
 
 
 def draw_card_description(text, draw):
