@@ -6,7 +6,7 @@ This file can also be imported as a module and contains the following
 functions:
 
     * load_font - loads a font
-    * convert_card_dimensions_to_pixels - sets the card dimensions in pixels (using 300 dpi)
+    * get_default_card_dimensions - sets the card dimensions in pixels (using 300 dpi)
     * convert_image_to_rgba - if necessary, a loaded image will get converted to RGBA
     * create_mask_with_rounded_corners - creates a mask image with rounded corners
     * apply_rounded_corners_to_card - applies a mask with rounded corners to a card image
@@ -15,6 +15,8 @@ functions:
 
 from PIL import Image, ImageDraw, ImageFont
 
+
+ROUNDED_CORNER_RADIUS = 30
 
 def load_font(font_path, size):
     """Loads a font
@@ -34,7 +36,7 @@ def load_font(font_path, size):
     return ImageFont.truetype(font_path, size)
 
 
-def convert_card_dimensions_to_pixels():
+def get_default_card_dimensions():
     """Sets card dimensions in pixels (converts mm to pixels using 300 dpi)
 
     Returns
@@ -80,23 +82,22 @@ def create_mask_with_rounded_corners(width, height):
         the image mask with rounded corners
     """
 
-    radius = 30
     mask = Image.new("L", (width, height), 0)
     mask_draw = ImageDraw.Draw(mask)
 
-    mask_draw.ellipse((0, 0, 2 * radius, 2 * radius), fill=255)  # Upper-left
+    mask_draw.ellipse((0, 0, 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS), fill=255)  # Upper-left
     mask_draw.ellipse(
-        (width - 2 * radius, 0, width, 2 * radius), fill=255
+        (width - 2 * ROUNDED_CORNER_RADIUS, 0, width, 2 * ROUNDED_CORNER_RADIUS), fill=255
     )  # Upper-right
     mask_draw.ellipse(
-        (0, height - 2 * radius, 2 * radius, height), fill=255
+        (0, height - 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS, height), fill=255
     )  # Lower-left
     mask_draw.ellipse(
-        (width - 2 * radius, height - 2 * radius, width, height), fill=255
+        (width - 2 * ROUNDED_CORNER_RADIUS, height - 2 * ROUNDED_CORNER_RADIUS, width, height), fill=255
     )  # Lower-right
 
-    mask_draw.rectangle((radius, 0, width - radius, height), fill=255)
-    mask_draw.rectangle((0, radius, width, height - radius), fill=255)
+    mask_draw.rectangle((ROUNDED_CORNER_RADIUS, 0, width - ROUNDED_CORNER_RADIUS, height), fill=255)
+    mask_draw.rectangle((0, ROUNDED_CORNER_RADIUS, width, height - ROUNDED_CORNER_RADIUS), fill=255)
 
     return mask
 
@@ -108,10 +109,6 @@ def apply_rounded_corners_to_card(card):
     ----------
     card : Image
         The card that will be made to have rounded corners
-    width : int
-        The width of the card
-    height : int
-        The height of the card
 
     """
     card.putalpha(create_mask_with_rounded_corners(card.width, card.height))
@@ -142,7 +139,7 @@ def load_card_image_frame(card_image_frame_path, width):
     )
 
     card_image_frame = card_image_frame.resize(
-        (width, card_image_frame_height), Image.ANTIALIAS
+        (width, card_image_frame_height), Image.LANCZOS
     )
 
     return card_image_frame

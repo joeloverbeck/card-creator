@@ -40,7 +40,7 @@ def draw_base_card(background_image_path, width, height):
     draw
         the draw instance that provides draw methods
     """
-    card = Image.open(background_image_path).resize((width, height))
+    card = Image.open(background_image_path).resize((width, height), Image.LANCZOS)
 
     draw = ImageDraw.Draw(card)
 
@@ -68,7 +68,7 @@ def draw_card_image(card, card_image, width):
     card_image_x = (width - card_image_width) // 2  # Center the card_image horizontally
 
     # Resize and position the card_image
-    card_image = card_image.resize((width, card_image_height))
+    card_image = card_image.resize((width, card_image_height), Image.LANCZOS)
 
     crop_margin = 0.09
     crop_x0 = int(card_image.width * crop_margin)
@@ -151,7 +151,7 @@ def draw_icons(icon_paths, card, height):
     icon_y = height - 50
 
     for icon_path in icon_paths:
-        icon = Image.open(icon_path).resize((40, 40))
+        icon = Image.open(icon_path).resize((40, 40), Image.LANCZOS)
 
         icon = convert_image_to_rgba(icon)
 

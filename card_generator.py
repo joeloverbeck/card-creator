@@ -21,7 +21,7 @@ from card_elements import (
     draw_card_description,
 )
 from image_utils import (
-    convert_card_dimensions_to_pixels,
+    get_default_card_dimensions,
     load_card_image_frame,
     apply_rounded_corners_to_card,
 )
@@ -57,7 +57,7 @@ def create_card(title, text, image_paths):
         All the paths to the images that will be drawn on the card
     """
 
-    width, height = convert_card_dimensions_to_pixels()
+    width, height = get_default_card_dimensions()
 
     card, draw = draw_base_card(image_paths["background_image_path"], width, height)
 
