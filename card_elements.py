@@ -17,6 +17,8 @@ from PIL import Image, ImageDraw
 
 from image_utils import convert_image_to_rgba, load_font
 
+TEXT_BANNER_PADDING = 30
+
 title_font = load_font("arial.ttf", 30)
 text_font = load_font("arial.ttf", 18)
 
@@ -86,6 +88,21 @@ def draw_card_image(card, card_image, width):
     card.paste(card_image, (card_image_x, card_image_y), card_image)
 
 
+def resize_text_banner(title_width, title_height):
+    """Resizes the text banner according to the title's dimensions
+
+    Parameters
+    ----------
+    title_width : int
+        The width of the title
+    title_height : int
+        The height of the title
+    """
+
+    banner_width = title_width + 2 * TEXT_BANNER_PADDING
+    banner_height = title_height + 2 * TEXT_BANNER_PADDING
+    banner_image = banner_image.resize((banner_width, banner_height), Image.LANCZOS)
+
 def draw_title(title, title_banner_path, width, card, draw):
     """Draws the title of the card
 
@@ -113,14 +130,11 @@ def draw_title(title, title_banner_path, width, card, draw):
     banner_image = convert_image_to_rgba(banner_image)
 
     # Resize the banner image based on the width of the title text
-    banner_padding = 30
-    banner_width = title_width + 2 * banner_padding
-    banner_height = title_height + 2 * banner_padding
-    banner_image = banner_image.resize((banner_width, banner_height), Image.LANCZOS)
+    resize_text_banner(title_width, title_height)
 
     # Calculate the position of the banner image
-    banner_x = title_x - banner_padding
-    banner_y = title_y - banner_padding
+    banner_x = title_x - TEXT_BANNER_PADDING
+    banner_y = title_y - TEXT_BANNER_PADDING
 
     # Draw the banner image
     card.paste(banner_image, (banner_x, banner_y), banner_image)
