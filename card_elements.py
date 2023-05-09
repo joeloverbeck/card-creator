@@ -13,13 +13,13 @@ functions:
 """
 
 from PIL import Image, ImageDraw
+from fonts import load_font
 
 from image_utils import (
+    calculate_centered_x,
+    calculate_height_of_image_according_to_width,
     convert_image_to_rgba,
-    crop_outer_boundaries_of_image,
-    load_card_image_frame,
-    load_font,
-    recalculate_card_x_after_cropping,
+    crop_image,
     resize_image,
 )
 from text_utils import draw_text_with_shadow
@@ -30,6 +30,17 @@ CARD_IMAGE_MARGIN = 100
 CARD_IMAGE_DISTANCE_FROM_TOP = 140
 
 TITLE_FONT = load_font("fonts/Roboto-Bold.ttf", 42)
+
+
+def get_default_card_dimensions():
+    """Sets card dimensions in pixels (converts mm to pixels using 300 dpi)
+
+    Returns
+    -------
+    int, int
+        width and height in pixels
+    """
+    return int(63.5 * 300 / 25.4), int(88 * 300 / 25.4)
 
 
 def draw_base_card(background_image_path, width, height):
@@ -67,7 +78,7 @@ def draw_card_image(card, card_image, canvas_width):
         The base card
     card_image : Image
         The card image that will get drawn on the base card
-    width : int
+    canvas_width : int
         The width of the canvas to drawn on
     """
 
@@ -77,14 +88,8 @@ def draw_card_image(card, card_image, canvas_width):
         card_image, canvas_width, CARD_IMAGE_MARGIN
     )
 
-    card_image = crop_outer_boundaries_of_image(card_image, CROP_MARGIN)
-
-    calculated_card_image_x = (
-        canvas_width - calculated_card_image_width
-    ) // 2  # Center the card_image horizontally
-
-    calculated_card_image_x = recalculate_card_x_after_cropping(
-        card_image, calculated_card_image_x, calculated_card_image_width
+    card_image, calculated_card_image_x = crop_image(
+        card_image, canvas_width, calculated_card_image_width, CROP_MARGIN
     )
 
     card.paste(
@@ -92,8 +97,52 @@ def draw_card_image(card, card_image, canvas_width):
     )
 
 
-def draw_card_frame(card_image_frame_path, card, height, width):
-    card_image_frame = load_card_image_frame(card_image_frame_path, height, width)
+def load_card_image_frame(card_image_frame_path, width):
+    """Loads the frame for the card image
+
+    Parameters
+    ----------
+    card_image_frame_path : str
+        The path to the card image frame PNG
+    width : int
+        The width of the canvas to drawn on
+
+    Returns
+    -------
+    Image
+        the loaded card image frame
+    """
+
+    card_image_frame = Image.open(card_image_frame_path)
+
+    card_image_frame = convert_image_to_rgba(card_image_frame)
+
+    card_image_frame_height = calculate_height_of_image_according_to_width(
+        card_image_frame, width
+    )
+
+    card_image_frame = card_image_frame.resize(
+        (width, card_image_frame_height), Image.LANCZOS
+    )
+
+    return card_image_frame
+
+
+def draw_card_frame(card_image_frame_path, card, canvas_width):
+    """Draws the frame of a card around the card image
+
+    Parameters
+    ----------
+    card_image_frame_path : str
+        The path to the frame that will be drawn around the card image
+    card : Image
+        The card where the frame will be drawn
+    height : int
+        The height of the canvas
+    width : int
+        The width of the canvas
+    """
+    card_image_frame = load_card_image_frame(card_image_frame_path, canvas_width)
 
     card_image_frame_x = 0
     card_image_frame_y = 0
@@ -108,6 +157,8 @@ def resize_text_banner(banner_image, title_width, title_height):
 
     Parameters
     ----------
+    banner_image : Image
+        The image of the title banner
     title_width : int
         The width of the title
     title_height : int
@@ -139,7 +190,7 @@ def draw_title(title, title_banner_path, canvas_width, card, draw):
 
     # Add title text
     title_width, title_height = draw.textsize(title, font=TITLE_FONT)
-    title_x = (canvas_width - title_width) // 2
+    title_x = calculate_centered_x(title_width, canvas_width)
     title_y = 30
 
     # Load the banner image
@@ -156,4 +207,12 @@ def draw_title(title, title_banner_path, canvas_width, card, draw):
     # Draw the banner image
     card.paste(banner_image, (banner_x, banner_y), banner_image)
 
-    draw_text_with_shadow(draw, title, (title_x, title_y), TITLE_FONT, fill="white", shadow_offset=2, shadow_opacity=128)
+    draw_text_with_shadow(
+        draw,
+        title,
+        (title_x, title_y),
+        TITLE_FONT,
+        fill="white",
+        shadow_offset=2,
+        shadow_opacity=128,
+    )

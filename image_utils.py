@@ -5,47 +5,16 @@ This script provides plenty of useful functions to process images related to cre
 This file can also be imported as a module and contains the following
 functions:
 
-    * load_font - loads a font
-    * get_default_card_dimensions - sets the card dimensions in pixels (using 300 dpi)
     * convert_image_to_rgba - if necessary, a loaded image will get converted to RGBA
     * create_mask_with_rounded_corners - creates a mask image with rounded corners
     * apply_rounded_corners_to_card - applies a mask with rounded corners to a card image
     * load_card_image_frame - loads the frame for a card image
 """
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 
 ROUNDED_CORNER_RADIUS = 30
-
-
-def load_font(font_path, size):
-    """Loads a font
-
-    Parameters
-    ----------
-    font_path : str
-        The path to the font. Could be ex. 'Arial.ttf', if it's a system font.
-    size : int
-        The size that the font will be drawn at
-
-    Returns
-    -------
-    FreeTypeFont
-        the loaded font
-    """
-    return ImageFont.truetype(font_path, size)
-
-
-def get_default_card_dimensions():
-    """Sets card dimensions in pixels (converts mm to pixels using 300 dpi)
-
-    Returns
-    -------
-    int, int
-        width and height in pixels
-    """
-    return int(63.5 * 300 / 25.4), int(88 * 300 / 25.4)
 
 
 def convert_image_to_rgba(image):
@@ -129,6 +98,24 @@ def apply_rounded_corners_to_card(card):
     card.putalpha(create_mask_with_rounded_corners(card.width, card.height))
 
 
+def calculate_centered_x(image_width, canvas_width):
+    return (canvas_width - image_width) // 2
+
+
+def crop_image(card_image, canvas_width, calculated_card_image_width, crop_margin):
+    card_image = crop_outer_boundaries_of_image(card_image, crop_margin)
+
+    calculated_card_image_x = calculate_centered_x(
+        calculated_card_image_width, canvas_width
+    )
+
+    calculated_card_image_x = recalculate_card_x_after_cropping(
+        card_image, calculated_card_image_x, calculated_card_image_width
+    )
+
+    return card_image, calculated_card_image_x
+
+
 def crop_outer_boundaries_of_image(image, crop_margin):
     crop_x0 = int(image.width * crop_margin)
     crop_y0 = int(image.height * crop_margin)
@@ -149,9 +136,11 @@ def recalculate_card_x_after_cropping(
 
 def resize_image(image, canvas_width, margin):
     # Calculate the size and position of the card_image with added margin
-    calculated_card_image_width = canvas_width - 2 * margin
-    calculated_card_image_height = int(
-        calculated_card_image_width * image.height / image.width
+    calculated_card_image_width = calculate_width_of_image_for_canvas(
+        canvas_width, margin
+    )
+    calculated_card_image_height = calculate_height_of_image_according_to_width(
+        image, calculated_card_image_width
     )
 
     # Resize and position the card_image
@@ -162,32 +151,9 @@ def resize_image(image, canvas_width, margin):
     return image, calculated_card_image_width
 
 
-def load_card_image_frame(card_image_frame_path, height, width):
-    """Loads the frame for the card image
+def calculate_width_of_image_for_canvas(canvas_width, margin):
+    return canvas_width - 2 * margin
 
-    Parameters
-    ----------
-    card_image_frame_path : str
-        The path to the card image frame PNG
-    width : int
-        The width of the canvas to drawn on
 
-    Returns
-    -------
-    Image
-        the loaded card image frame
-    """
-
-    card_image_frame = Image.open(card_image_frame_path)
-
-    card_image_frame = convert_image_to_rgba(card_image_frame)
-
-    card_image_frame_height = int(
-        width * card_image_frame.height / card_image_frame.width
-    )
-
-    card_image_frame = card_image_frame.resize(
-        (width, card_image_frame_height), Image.LANCZOS
-    )
-
-    return card_image_frame
+def calculate_height_of_image_according_to_width(image, width):
+    return int(width * image.height / image.width)

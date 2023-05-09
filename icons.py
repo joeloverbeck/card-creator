@@ -1,16 +1,16 @@
 from PIL import Image
 
-from image_utils import convert_image_to_rgba
+from image_utils import calculate_centered_x, convert_image_to_rgba
 
+BIOME_TYPE_ICON_SIZE = 200
 STRUGGLE_ICON_SIZE = 100
 STRUGGLE_ICON_DISTANCE_FROM_BOTTOM = 220
+BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM = 300
 
 
-def draw_row_of_icons(icon_paths, starting_x, icons_y, card, gap=5):
+def draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card, gap=5):
     for icon_path in icon_paths:
-        icon = Image.open(icon_path).resize(
-            (STRUGGLE_ICON_SIZE, STRUGGLE_ICON_SIZE), Image.LANCZOS
-        )
+        icon = Image.open(icon_path).resize((icon_size, icon_size), Image.LANCZOS)
 
         icon = convert_image_to_rgba(icon)
 
@@ -31,7 +31,7 @@ def calculate_total_width_of_icons_and_gap(icon_paths, icon_size, gap=5):
     return total_icons_width
 
 
-def draw_icons(icon_paths, card, height, width):
+def draw_icons(icon_paths, card, icon_size, icons_y, canvas_height, canvas_width):
     """Draws the icons of the card
 
     Parameters
@@ -40,21 +40,17 @@ def draw_icons(icon_paths, card, height, width):
         Contains the paths to all the icons that will need to get drawn
     card : Image
         The base card upon which the icons will be drawn
-    height : int
+    icons_y : int
+        The y position where the icons will be drawn
+    canvas_height : int
         The height of the canvas where the icons will be drawn
-    width : int
+    canvas_width : int
         The width of the canvas where the icons will be drawn
-    gap : int
-        The gap between each icon in the row that will get drawn
     """
 
-    total_icons_width = calculate_total_width_of_icons_and_gap(
-        icon_paths, STRUGGLE_ICON_SIZE
-    )
+    total_icons_width = calculate_total_width_of_icons_and_gap(icon_paths, icon_size)
 
     # Calculate the starting x-coordinate for the first icon
-    starting_x = (width - total_icons_width) // 2
+    starting_x = calculate_centered_x(total_icons_width, canvas_width)
 
-    icons_y = height - STRUGGLE_ICON_DISTANCE_FROM_BOTTOM
-
-    draw_row_of_icons(icon_paths, starting_x, icons_y, card)
+    draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card)
