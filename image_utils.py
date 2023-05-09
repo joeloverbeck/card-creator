@@ -98,6 +98,20 @@ def apply_rounded_corners_to_card(card):
     card.putalpha(create_mask_with_rounded_corners(card.width, card.height))
 
 
+def calculate_new_image_dimensions_respecting_aspect_ratio(
+    image, canvas_width, canvas_height
+):
+    bg_width, bg_height = image.size
+
+    scale_factor_w = canvas_width / bg_width
+    scale_factor_h = canvas_height / bg_height
+    scale_factor = max(scale_factor_w, scale_factor_h)
+    new_width = int(bg_width * scale_factor)
+    new_height = int(bg_height * scale_factor)
+
+    return new_width, new_height
+
+
 def calculate_centered_x(image_width, canvas_width):
     return (canvas_width - image_width) // 2
 
@@ -114,6 +128,15 @@ def crop_image(card_image, canvas_width, calculated_card_image_width, crop_margi
     )
 
     return card_image, calculated_card_image_x
+
+
+def crop_image_to_fit_canvas_dimensions(image, canvas_width, canvas_height):
+    left = (image.width - canvas_width) / 2
+    top = (image.height - canvas_height) / 2
+    right = (image.width + canvas_width) / 2
+    bottom = (image.height + canvas_height) / 2
+
+    return image.crop((left, top, right, bottom))
 
 
 def crop_outer_boundaries_of_image(image, crop_margin):

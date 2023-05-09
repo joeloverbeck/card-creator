@@ -13,13 +13,14 @@ functions:
 """
 
 from PIL import Image, ImageDraw
-from fonts import load_font
 
 from image_utils import (
     calculate_centered_x,
     calculate_height_of_image_according_to_width,
+    calculate_new_image_dimensions_respecting_aspect_ratio,
     convert_image_to_rgba,
     crop_image,
+    crop_image_to_fit_canvas_dimensions,
     resize_image,
 )
 from text_utils import draw_text_with_shadow
@@ -29,7 +30,8 @@ CROP_MARGIN = 0.07
 CARD_IMAGE_MARGIN = 100
 CARD_IMAGE_DISTANCE_FROM_TOP = 140
 
-TITLE_FONT = load_font("fonts/Roboto-Bold.ttf", 42)
+BIOME_TITLE_Y = 30
+ENCOUNTER_TITLE_Y = 50
 
 
 def get_default_card_dimensions():
@@ -43,16 +45,16 @@ def get_default_card_dimensions():
     return int(63.5 * 300 / 25.4), int(88 * 300 / 25.4)
 
 
-def draw_base_card(background_image_path, width, height):
+def draw_base_card(background_image_path, canvas_width, canvas_height):
     """Loads and resizes the background image
 
     Parameters
     ----------
     background_image_path : str
         The path to the background image
-    width : int
+    canvas_width : int
         The width of the canvas to draw on
-    height : int
+    canvas_height : int
         The height of the canvas to draw on
 
     Returns
@@ -62,7 +64,18 @@ def draw_base_card(background_image_path, width, height):
     draw
         the draw instance that provides draw methods
     """
-    card = Image.open(background_image_path).resize((width, height), Image.LANCZOS)
+
+    background_image = Image.open(background_image_path)
+
+    new_width, new_height = calculate_new_image_dimensions_respecting_aspect_ratio(
+        background_image, canvas_width, canvas_height
+    )
+
+    background_image = background_image.resize((new_width, new_height), Image.LANCZOS)
+
+    card = crop_image_to_fit_canvas_dimensions(
+        background_image, canvas_width, canvas_height
+    )
 
     draw = ImageDraw.Draw(card)
 
@@ -171,28 +184,9 @@ def resize_text_banner(banner_image, title_width, title_height):
     return banner_image.resize((banner_width, banner_height), Image.LANCZOS)
 
 
-def draw_title(title, title_banner_path, canvas_width, card, draw):
-    """Draws the title of the card
-
-    Parameters
-    ----------
-    title : str
-        The title of the card
-    title_banner_path : str
-        The path to the banner that will be drawn behind the title
-    canvas_width : int
-        The width of the canvas where the title will be drawn
-    card : Image
-        The card where the banner will be drawn
-    draw : ImageDraw
-        Offers methods related to drawing
-    """
-
-    # Add title text
-    title_width, title_height = draw.textsize(title, font=TITLE_FONT)
-    title_x = calculate_centered_x(title_width, canvas_width)
-    title_y = 30
-
+def draw_title_banner(
+    title_banner_path, title_x, title_y, title_width, title_height, card
+):
     # Load the banner image
     banner_image = Image.open(title_banner_path)
     banner_image = convert_image_to_rgba(banner_image)
@@ -207,11 +201,47 @@ def draw_title(title, title_banner_path, canvas_width, card, draw):
     # Draw the banner image
     card.paste(banner_image, (banner_x, banner_y), banner_image)
 
+
+class MissingTitleYCoordinateError(Exception):
+    "Raised when 'draw_title' has been called with a dictionary of values that doesn't contain 'title_y'"
+    pass
+
+
+def draw_title(draw_title_parameters):
+    """Draws the title of the card
+
+    Parameters
+    ----------
+    draw_title_parameters : dict
+        A dictionary with all the necessary arguments to draw the title
+    """
+
+    # Add title text
+    title_width, title_height = draw_title_parameters["draw"].textsize(
+        draw_title_parameters["title"], draw_title_parameters["font"]
+    )
+    title_x = calculate_centered_x(title_width, draw_title_parameters["canvas_width"])
+
+    if "title_y" not in draw_title_parameters:
+        raise MissingTitleYCoordinateError(
+            "The dictionary passed to 'draw_title' doesn't contain the key 'title_y'."
+        )
+
+    if draw_title_parameters["title_banner_path"] is not None:
+        draw_title_banner(
+            draw_title_parameters["title_banner_path"],
+            title_x,
+            draw_title_parameters["title_y"],
+            title_width,
+            title_height,
+            draw_title_parameters["card"],
+        )
+
     draw_text_with_shadow(
-        draw,
-        title,
-        (title_x, title_y),
-        TITLE_FONT,
+        draw_title_parameters["draw"],
+        draw_title_parameters["title"],
+        (title_x, draw_title_parameters["title_y"]),
+        draw_title_parameters["font"],
         fill="white",
         shadow_offset=2,
         shadow_opacity=128,

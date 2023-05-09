@@ -5,7 +5,7 @@ from image_utils import calculate_centered_x, convert_image_to_rgba
 BIOME_TYPE_ICON_SIZE = 200
 STRUGGLE_ICON_SIZE = 100
 STRUGGLE_ICON_DISTANCE_FROM_BOTTOM = 220
-BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM = 300
+BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM = 350
 
 
 def draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card, gap=5):

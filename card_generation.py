@@ -17,6 +17,9 @@ import toml
 from PIL import Image
 
 from card_elements import (
+    BIOME_TITLE_Y,
+    ENCOUNTER_TITLE_Y,
+    MissingTitleYCoordinateError,
     convert_image_to_rgba,
     draw_base_card,
     draw_card_frame,
@@ -24,6 +27,7 @@ from card_elements import (
     draw_title,
     get_default_card_dimensions,
 )
+from fonts import BIOME_TITLE_FONT, ENCOUNTER_TITLE_FONT
 from image_utils import (
     apply_rounded_corners_to_card,
 )
@@ -71,20 +75,19 @@ def create_biome_card():
 
     title = biome_data["title"]
     background_image_path = biome_data["paths"]["background_image_path"]
-    title_banner_path = biome_data["paths"]["title_banner_path"]
-    card_image_path = biome_data["paths"]["card_image_path"]
-    card_image_frame_path = biome_data["paths"]["card_image_frame_path"]
     biome_type_path = biome_data["paths"]["biome_type_path"]
 
     image_paths = {
         "background_image_path": background_image_path,
-        "title_banner_path": title_banner_path,
-        "card_image_path": card_image_path,
-        "card_image_frame_path": card_image_frame_path,
         "biome_type_path": biome_type_path,
     }
 
-    create_card(title, image_paths, "biome")
+    try:
+        create_card(title, image_paths, "biome")
+    except MissingTitleYCoordinateError as exception:
+        raise MissingTitleYCoordinateError(
+            f"Failed to create a card from 'create_biome_card'. Error: {exception}"
+        )
 
 
 def create_encounter_card():
@@ -94,7 +97,7 @@ def create_encounter_card():
 
     title = encounter_data["title"]
     background_image_path = encounter_data["paths"]["background_image_path"]
-    title_banner_path = encounter_data["paths"]["title_banner_path"]
+    # title_banner_path = encounter_data["paths"]["title_banner_path"]
     card_image_path = encounter_data["paths"]["card_image_path"]
     card_image_frame_path = encounter_data["paths"]["card_image_frame_path"]
     struggle_icon_paths = [
@@ -103,13 +106,18 @@ def create_encounter_card():
 
     image_paths = {
         "background_image_path": background_image_path,
-        "title_banner_path": title_banner_path,
+        # "title_banner_path": title_banner_path,
         "card_image_path": card_image_path,
         "card_image_frame_path": card_image_frame_path,
         "struggle_icon_paths": struggle_icon_paths,
     }
 
-    create_card(title, image_paths, "encounter")
+    try:
+        create_card(title, image_paths, "encounter")
+    except MissingTitleYCoordinateError as exception:
+        raise MissingTitleYCoordinateError(
+            f"Failed to create a card from 'create_encounter_card'. Error: {exception}"
+        )
 
 
 def create_card(title, image_paths, card_type):
@@ -130,16 +138,44 @@ def create_card(title, image_paths, card_type):
         image_paths["background_image_path"], canvas_width, canvas_height
     )
 
-    # Load the card image and convert to RGBA mode if necessary
-    draw_card_image(
-        card,
-        convert_image_to_rgba(Image.open(image_paths["card_image_path"])),
-        canvas_width,
-    )
+    if "card_image_path" in image_paths.keys():
+        draw_card_image(
+            card,
+            convert_image_to_rgba(Image.open(image_paths["card_image_path"])),
+            canvas_width,
+        )
 
-    draw_card_frame(image_paths["card_image_frame_path"], card, canvas_width)
+    if "card_image_frame_path" in image_paths.keys():
+        draw_card_frame(image_paths["card_image_frame_path"], card, canvas_width)
 
-    draw_title(title, image_paths["title_banner_path"], canvas_width, card, draw)
+    if card_type == "encounter":
+        font = ENCOUNTER_TITLE_FONT
+        title_y = ENCOUNTER_TITLE_Y
+    elif card_type == "biome":
+        font = BIOME_TITLE_FONT
+        title_y = BIOME_TITLE_Y
+
+    title_banner_path = None
+
+    if "title_banner_path" in image_paths.keys():
+        title_banner_path = image_paths["title_banner_path"]
+
+    draw_title_parameters = {
+        "title": title,
+        "title_banner_path": title_banner_path,
+        "font": font,
+        "canvas_width": canvas_width,
+        "card": card,
+        "draw": draw,
+        "title_y": title_y,
+    }
+
+    try:
+        draw_title(draw_title_parameters)
+    except MissingTitleYCoordinateError as exception:
+        raise MissingTitleYCoordinateError(
+            f"Failed to draw the title of the card from 'create_card'. Error: {exception}"
+        )
 
     if "biome_type_path" in image_paths.keys():
         draw_icons(

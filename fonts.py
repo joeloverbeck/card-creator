@@ -17,3 +17,7 @@ def load_font(font_path, size):
         the loaded font
     """
     return ImageFont.truetype(font_path, size)
+
+
+BIOME_TITLE_FONT = load_font("fonts/Roboto-Bold.ttf", 60)
+ENCOUNTER_TITLE_FONT = load_font("fonts/Roboto-Bold.ttf", 42)
