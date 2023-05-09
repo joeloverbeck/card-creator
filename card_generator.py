@@ -15,16 +15,16 @@ from PIL import Image
 from card_elements import (
     convert_image_to_rgba,
     draw_base_card,
+    draw_card_frame,
     draw_card_image,
     draw_title,
-    draw_icons,
-    draw_card_description,
 )
 from image_utils import (
     get_default_card_dimensions,
     load_card_image_frame,
     apply_rounded_corners_to_card,
 )
+from icons import draw_icons
 
 OUTPUT_DIRECTORY = "output"
 
@@ -43,16 +43,14 @@ def save_card_as_png(title, card):
     card.save(f"{OUTPUT_DIRECTORY}/{title}_card.png")
 
 
-def create_card(title, text, image_paths):
-    """Creates a card given the passed title, the text, and the image paths.
+def create_card(title, image_paths):
+    """Creates a card given the passed title and the image paths.
     It also handles saving the created card to a PNG file.
 
     Parameters
     ----------
     title : str
         The title of the card that will be created
-    text : str
-        The text that will be written on the card, other than the title.
     image_paths : dict
         All the paths to the images that will be drawn on the card
     """
@@ -66,22 +64,11 @@ def create_card(title, text, image_paths):
         card, convert_image_to_rgba(Image.open(image_paths["card_image_path"])), width
     )
 
-    card_image_frame = load_card_image_frame(
-        image_paths["card_image_frame_path"], width
-    )
-
-    card_image_frame_x = 0
-    card_image_frame_y = 0
-
-    card.paste(
-        card_image_frame, (card_image_frame_x, card_image_frame_y), card_image_frame
-    )
+    draw_card_frame(image_paths["card_image_frame_path"], card, height, width)
 
     draw_title(title, image_paths["title_banner_path"], width, card, draw)
 
-    #draw_card_description(text, draw)
-
-    #draw_icons(image_paths["icon_paths"], card, height)
+    draw_icons(image_paths["icon_paths"], card, height, width)
 
     apply_rounded_corners_to_card(card)
 

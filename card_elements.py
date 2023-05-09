@@ -9,18 +9,27 @@ functions:
     * draw_base_card - draws the base card and returns that card and the draw instance
     * draw_card_image - draws the card image on top of a base card
     * draw_title - draws the title of the card
-    * draw_card_description - draws the description of the card
     * draw_icons - draws the icons of the card
 """
 
 from PIL import Image, ImageDraw
 
-from image_utils import convert_image_to_rgba, load_font
+from image_utils import (
+    convert_image_to_rgba,
+    crop_outer_boundaries_of_image,
+    load_card_image_frame,
+    load_font,
+    recalculate_card_x_after_cropping,
+    resize_image,
+)
+from text_utils import draw_text_with_shadow
 
 TEXT_BANNER_PADDING = 30
+CROP_MARGIN = 0.07
+CARD_IMAGE_MARGIN = 100
+CARD_IMAGE_DISTANCE_FROM_TOP = 140
 
-title_font = load_font("arial.ttf", 30)
-text_font = load_font("arial.ttf", 18)
+TITLE_FONT = load_font("fonts/Roboto-Bold.ttf", 42)
 
 
 def draw_base_card(background_image_path, width, height):
@@ -49,7 +58,7 @@ def draw_base_card(background_image_path, width, height):
     return card, draw
 
 
-def draw_card_image(card, card_image, width):
+def draw_card_image(card, card_image, canvas_width):
     """Draws the image of the card onto the base card
 
     Parameters
@@ -64,31 +73,37 @@ def draw_card_image(card, card_image, width):
 
     card_image = convert_image_to_rgba(card_image)
 
-    # Calculate the size and position of the card_image
-    card_image_width = width
-    card_image_height = int(card_image_width * card_image.height / card_image.width)
-    card_image_x = (width - card_image_width) // 2  # Center the card_image horizontally
+    card_image, calculated_card_image_width = resize_image(
+        card_image, canvas_width, CARD_IMAGE_MARGIN
+    )
 
-    # Resize and position the card_image
-    card_image = card_image.resize((width, card_image_height), Image.LANCZOS)
+    card_image = crop_outer_boundaries_of_image(card_image, CROP_MARGIN)
 
-    crop_margin = 0.07
-    crop_x0 = int(card_image.width * crop_margin)
-    crop_y0 = int(card_image.height * crop_margin)
-    crop_x1 = card_image.width - crop_x0
-    crop_y1 = card_image.height - crop_y0
-    card_image = card_image.crop((crop_x0, crop_y0, crop_x1, crop_y1))
+    calculated_card_image_x = (
+        canvas_width - calculated_card_image_width
+    ) // 2  # Center the card_image horizontally
 
-    # Recalculate the position of the card image after cropping
-    card_image_width, card_image_height = card_image.size
-    card_image_x = (width - card_image_width) // 2
+    calculated_card_image_x = recalculate_card_x_after_cropping(
+        card_image, calculated_card_image_x, calculated_card_image_width
+    )
 
-    card_image_y = 60
-
-    card.paste(card_image, (card_image_x, card_image_y), card_image)
+    card.paste(
+        card_image, (calculated_card_image_x, CARD_IMAGE_DISTANCE_FROM_TOP), card_image
+    )
 
 
-def resize_text_banner(title_width, title_height):
+def draw_card_frame(card_image_frame_path, card, height, width):
+    card_image_frame = load_card_image_frame(card_image_frame_path, height, width)
+
+    card_image_frame_x = 0
+    card_image_frame_y = 0
+
+    card.paste(
+        card_image_frame, (card_image_frame_x, card_image_frame_y), card_image_frame
+    )
+
+
+def resize_text_banner(banner_image, title_width, title_height):
     """Resizes the text banner according to the title's dimensions
 
     Parameters
@@ -101,9 +116,11 @@ def resize_text_banner(title_width, title_height):
 
     banner_width = title_width + 2 * TEXT_BANNER_PADDING
     banner_height = title_height + 2 * TEXT_BANNER_PADDING
-    banner_image = banner_image.resize((banner_width, banner_height), Image.LANCZOS)
 
-def draw_title(title, title_banner_path, width, card, draw):
+    return banner_image.resize((banner_width, banner_height), Image.LANCZOS)
+
+
+def draw_title(title, title_banner_path, canvas_width, card, draw):
     """Draws the title of the card
 
     Parameters
@@ -112,7 +129,7 @@ def draw_title(title, title_banner_path, width, card, draw):
         The title of the card
     title_banner_path : str
         The path to the banner that will be drawn behind the title
-    width : int
+    canvas_width : int
         The width of the canvas where the title will be drawn
     card : Image
         The card where the banner will be drawn
@@ -121,8 +138,8 @@ def draw_title(title, title_banner_path, width, card, draw):
     """
 
     # Add title text
-    title_width, title_height = draw.textsize(title, font=title_font)
-    title_x = (width - title_width) // 2
+    title_width, title_height = draw.textsize(title, font=TITLE_FONT)
+    title_x = (canvas_width - title_width) // 2
     title_y = 30
 
     # Load the banner image
@@ -130,7 +147,7 @@ def draw_title(title, title_banner_path, width, card, draw):
     banner_image = convert_image_to_rgba(banner_image)
 
     # Resize the banner image based on the width of the title text
-    resize_text_banner(title_width, title_height)
+    banner_image = resize_text_banner(banner_image, title_width, title_height)
 
     # Calculate the position of the banner image
     banner_x = title_x - TEXT_BANNER_PADDING
@@ -139,44 +156,4 @@ def draw_title(title, title_banner_path, width, card, draw):
     # Draw the banner image
     card.paste(banner_image, (banner_x, banner_y), banner_image)
 
-    draw.text((title_x, title_y), title, font=title_font, fill="white")
-
-
-def draw_card_description(text, draw):
-    """Draws the card description
-
-    Parameters
-    ----------
-    text : str
-        The text that will get drawn
-    draw : ImageDraw
-        Offers methods related to drawing
-    """
-
-    card_description_y = 800
-    draw.text((10, card_description_y), text, font=text_font, fill="black")
-
-
-def draw_icons(icon_paths, card, height):
-    """Draws the icons of the card
-
-    Parameters
-    ----------
-    icon_paths : list
-        Contains the paths to all the icons that will need to get drawn
-    card : Image
-        The base card upon which the icons will be drawn
-    height : int
-        The height of the canvas where the title will be drawn
-    """
-
-    icon_x = 10
-    icon_y = height - 50
-
-    for icon_path in icon_paths:
-        icon = Image.open(icon_path).resize((40, 40), Image.LANCZOS)
-
-        icon = convert_image_to_rgba(icon)
-
-        card.paste(icon, (icon_x, icon_y), icon)
-        icon_x += 50
+    draw_text_with_shadow(draw, title, (title_x, title_y), TITLE_FONT, fill="white", shadow_offset=2, shadow_opacity=128)

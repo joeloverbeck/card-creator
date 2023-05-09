@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROUNDED_CORNER_RADIUS = 30
 
+
 def load_font(font_path, size):
     """Loads a font
 
@@ -85,19 +86,33 @@ def create_mask_with_rounded_corners(width, height):
     mask = Image.new("L", (width, height), 0)
     mask_draw = ImageDraw.Draw(mask)
 
-    mask_draw.ellipse((0, 0, 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS), fill=255)  # Upper-left
     mask_draw.ellipse(
-        (width - 2 * ROUNDED_CORNER_RADIUS, 0, width, 2 * ROUNDED_CORNER_RADIUS), fill=255
+        (0, 0, 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS), fill=255
+    )  # Upper-left
+    mask_draw.ellipse(
+        (width - 2 * ROUNDED_CORNER_RADIUS, 0, width, 2 * ROUNDED_CORNER_RADIUS),
+        fill=255,
     )  # Upper-right
     mask_draw.ellipse(
-        (0, height - 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS, height), fill=255
+        (0, height - 2 * ROUNDED_CORNER_RADIUS, 2 * ROUNDED_CORNER_RADIUS, height),
+        fill=255,
     )  # Lower-left
     mask_draw.ellipse(
-        (width - 2 * ROUNDED_CORNER_RADIUS, height - 2 * ROUNDED_CORNER_RADIUS, width, height), fill=255
+        (
+            width - 2 * ROUNDED_CORNER_RADIUS,
+            height - 2 * ROUNDED_CORNER_RADIUS,
+            width,
+            height,
+        ),
+        fill=255,
     )  # Lower-right
 
-    mask_draw.rectangle((ROUNDED_CORNER_RADIUS, 0, width - ROUNDED_CORNER_RADIUS, height), fill=255)
-    mask_draw.rectangle((0, ROUNDED_CORNER_RADIUS, width, height - ROUNDED_CORNER_RADIUS), fill=255)
+    mask_draw.rectangle(
+        (ROUNDED_CORNER_RADIUS, 0, width - ROUNDED_CORNER_RADIUS, height), fill=255
+    )
+    mask_draw.rectangle(
+        (0, ROUNDED_CORNER_RADIUS, width, height - ROUNDED_CORNER_RADIUS), fill=255
+    )
 
     return mask
 
@@ -114,7 +129,40 @@ def apply_rounded_corners_to_card(card):
     card.putalpha(create_mask_with_rounded_corners(card.width, card.height))
 
 
-def load_card_image_frame(card_image_frame_path, width):
+def crop_outer_boundaries_of_image(image, crop_margin):
+    crop_x0 = int(image.width * crop_margin)
+    crop_y0 = int(image.height * crop_margin)
+    crop_x1 = image.width - crop_x0
+    crop_y1 = image.height - crop_y0
+
+    return image.crop((crop_x0, crop_y0, crop_x1, crop_y1))
+
+
+def recalculate_card_x_after_cropping(
+    card, calculated_card_x, calculated_card_image_width
+):
+    card_image_width_after_crop, _ = card.size
+    width_difference = calculated_card_image_width - card_image_width_after_crop
+
+    return calculated_card_x + width_difference // 2
+
+
+def resize_image(image, canvas_width, margin):
+    # Calculate the size and position of the card_image with added margin
+    calculated_card_image_width = canvas_width - 2 * margin
+    calculated_card_image_height = int(
+        calculated_card_image_width * image.height / image.width
+    )
+
+    # Resize and position the card_image
+    image = image.resize(
+        (calculated_card_image_width, calculated_card_image_height), Image.LANCZOS
+    )
+
+    return image, calculated_card_image_width
+
+
+def load_card_image_frame(card_image_frame_path, height, width):
     """Loads the frame for the card image
 
     Parameters

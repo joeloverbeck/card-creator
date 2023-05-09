@@ -1,0 +1,18 @@
+
+title = "Beast-Trees"
+
+[paths]
+background_image_path = "raw_images/background_forest.png"
+title_banner_path = "raw_images/title_banner_2.png"
+card_image_path = "raw_images/beast_trees.png"
+card_image_frame_path = "raw_images/frame.png"
+
+
+[[paths.icon_paths]]
+value = "raw_images/emotional_icon.png"
+
+[[paths.icon_paths]]
+value = "raw_images/cognitive_icon.png"
+
+[[paths.icon_paths]]
+value = "raw_images/environmental_icon.png"

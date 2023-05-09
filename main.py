@@ -1,26 +1,31 @@
+import toml
+
 from card_generator import create_card
 
 RAW_IMAGES_DIRECTORY = "raw_images"
 
 
 def main():
-    title = "Sentient Octopi"
-    text = "What the fuck?! RUN!"
+    # Load the data from the TOML file
+    encounter_data = toml.load("toml/encounter_card.toml")
+
+    title = encounter_data["title"]
+    background_image_path = encounter_data["paths"]["background_image_path"]
+    title_banner_path = encounter_data["paths"]["title_banner_path"]
+    card_image_path = encounter_data["paths"]["card_image_path"]
+    card_image_frame_path = encounter_data["paths"]["card_image_frame_path"]
+    icon_paths = [icon["value"] for icon in encounter_data["paths"]["icon_paths"]]
 
     image_paths = {
-        "background_image_path": RAW_IMAGES_DIRECTORY + "/background_image.png",
-        "title_banner_path": RAW_IMAGES_DIRECTORY + "/title_banner.png",
-        "card_image_path": RAW_IMAGES_DIRECTORY + "/card_image.png",
-        "card_image_frame_path": RAW_IMAGES_DIRECTORY + "/card_image_frame.png",
-        "icon_paths": [
-            RAW_IMAGES_DIRECTORY + "/icon1.png",
-            RAW_IMAGES_DIRECTORY + "/icon2.png",
-        ],
+        "background_image_path": background_image_path,
+        "title_banner_path": title_banner_path,
+        "card_image_path": card_image_path,
+        "card_image_frame_path": card_image_frame_path,
+        "icon_paths": icon_paths,
     }
 
     create_card(
         title,
-        text,
         image_paths,
     )
 
