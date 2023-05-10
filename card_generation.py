@@ -92,8 +92,10 @@ def create_biome_card():
             f"Failed to create a card from 'create_biome_card'. Error: {exception}"
         )
 
+
 class IncorrectImagePathException(Exception):
     pass
+
 
 def create_encounter_card():
     """Creates an encounter card"""
@@ -171,12 +173,16 @@ def create_card(title, image_paths, card_type):
     if card_type == "encounter":
         font = ENCOUNTER_TITLE_FONT
         title_y = ENCOUNTER_TITLE_Y
-        biome_type_icon_distance_from_bottom = BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD
+        biome_type_icon_distance_from_bottom = (
+            BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD
+        )
         biome_type_icon_size = BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD
     elif card_type == "biome":
         font = BIOME_TITLE_FONT
         title_y = BIOME_TITLE_Y
-        biome_type_icon_distance_from_bottom = BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD
+        biome_type_icon_distance_from_bottom = (
+            BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD
+        )
         biome_type_icon_size = BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD
 
     title_banner_path = None
@@ -200,7 +206,7 @@ def create_card(title, image_paths, card_type):
         raise MissingTitleYCoordinateError(
             f"Failed to draw the title of the card from 'create_card'. Error: {exception}"
         )
-    
+
     if "biome_type_path" in image_paths.keys():
         draw_icons(
             [image_paths["biome_type_path"]],

@@ -19,7 +19,9 @@ def draw_shadow_for_icon(icon, starting_x, icons_y, card):
     shadow_mask = create_shadow_mask(icon, shadow_offset, shadow_opacity)
 
     # Draw the shadow
-    card.paste(shadow_mask, (starting_x + shadow_offset, icons_y + shadow_offset), shadow_mask)
+    card.paste(
+        shadow_mask, (starting_x + shadow_offset, icons_y + shadow_offset), shadow_mask
+    )
 
 
 def draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card, gap=5):

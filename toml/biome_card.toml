@@ -1,7 +1,7 @@
 
-title = "Mountain"
+title = "Forest"
 
 [paths]
-background_image_path = "raw_images/biomes/mountain_background.png"
+background_image_path = "raw_images/biomes/forest_background.png"
 title_banner_path = "raw_images/banners/title_banner_2.png"
-biome_type_path = "raw_images/icons/mountain_icon.png"
+biome_type_path = "raw_images/icons/forest_icon.png"

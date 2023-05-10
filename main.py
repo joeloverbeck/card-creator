@@ -1,7 +1,11 @@
 import argparse
 from card_elements import MissingTitleYCoordinateError
 
-from card_generation import IncorrectImagePathException, create_biome_card, create_encounter_card
+from card_generation import (
+    IncorrectImagePathException,
+    create_biome_card,
+    create_encounter_card,
+)
 
 RAW_IMAGES_DIRECTORY = "raw_images"
 
@@ -31,7 +35,9 @@ def main():
         print(f"Failed to create a card from main. Error: {exception}")
         return
     except IncorrectImagePathException as exception:
-        print(f"Failed to create a card from main because some image path doesn't lead to an actual file. Error: {exception}")
+        print(
+            f"Failed to create a card from main because some image path doesn't lead to an actual file. Error: {exception}"
+        )
         return
 
 
