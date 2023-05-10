@@ -1,0 +1,14 @@
+
+title = "Enchanted Wildlands"
+
+[paths]
+background_image_path = "raw_images/backgrounds/enchanted_wildlands.png"
+
+[[paths.biome_icon_paths]]
+value = "raw_images/icons/forest_icon.png"
+
+[[paths.biome_icon_paths]]
+value = "raw_images/icons/grassland_icon.png"
+
+[[paths.biome_icon_paths]]
+value = "raw_images/icons/mountain_icon.png"

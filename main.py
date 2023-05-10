@@ -1,11 +1,13 @@
 import argparse
 from card_elements import MissingTitleYCoordinateError
 
-from card_generation import (
-    IncorrectImagePathException,
-    create_biome_card,
-    create_encounter_card,
+from card_setups import (
+    setup_biome_card,
+    setup_encounter_card,
+    setup_exploration_zone_card,
+    setup_exploration_zone_back_card,
 )
+from file_utils import IncorrectImagePathException
 
 RAW_IMAGES_DIRECTORY = "raw_images"
 
@@ -25,9 +27,13 @@ def main():
 
     try:
         if args.type_of_card == "encounter":
-            create_encounter_card()
+            setup_encounter_card()
         elif args.type_of_card == "biome":
-            create_biome_card()
+            setup_biome_card()
+        elif args.type_of_card == "exploration_zone":
+            setup_exploration_zone_card()
+        elif args.type_of_card == "exploration_zone_back":
+            setup_exploration_zone_back_card()
         else:
             print(f"Not implemented for type of card '{args.type_of_card}'")
             return
