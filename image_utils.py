@@ -16,6 +16,8 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROUNDED_CORNER_RADIUS = 30
 
+SHADOW_PADDING = 10
+
 
 def convert_image_to_rgba(image):
     """Converts a loaded image to RGBA if necessary
@@ -37,15 +39,22 @@ def convert_image_to_rgba(image):
 
 
 def create_shadow_mask(icon, shadow_offset, shadow_opacity):
-    # Create a black image with the same size as the icon
-    shadow_mask = Image.new("RGBA", icon.size, (0, 0, 0, 0))
+    # Create a black image with the same size as the icon plus extra padding
+    shadow_mask = Image.new(
+        "RGBA",
+        (icon.size[0] + SHADOW_PADDING, icon.size[1] + SHADOW_PADDING),
+        (0, 0, 0, 0),
+    )
 
     # Set the alpha channel of the black image to match the icon's alpha channel
     for x in range(icon.width):
         for y in range(icon.height):
             _, _, _, alpha = icon.getpixel((x, y))
             if alpha > 0:
-                shadow_mask.putpixel((x, y), (0, 0, 0, shadow_opacity))
+                shadow_mask.putpixel(
+                    (x + SHADOW_PADDING // 2, y + SHADOW_PADDING // 2),
+                    (0, 0, 0, shadow_opacity),
+                )
 
     # Apply a blur effect to the shadow mask
     shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(radius=shadow_offset))

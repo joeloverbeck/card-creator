@@ -1,0 +1,4 @@
+
+
+class UnhandledCardTypeException(Exception):
+    pass

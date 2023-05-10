@@ -24,7 +24,7 @@ from card_elements import (
     draw_title,
     get_default_card_dimensions,
 )
-from file_utils import save_card_as_png
+from file_utils import UnhandledCardTypeException, save_card_as_png
 from fonts import BIOME_TITLE_FONT, ENCOUNTER_TITLE_FONT
 from image_utils import (
     apply_rounded_corners_to_card,
@@ -32,20 +32,16 @@ from image_utils import (
 from icons import (
     BACK_ICON_SIZE,
     BIOME_ICONS_DISTANCE_FROM_BOTTOM_IN_EXPLORATION_ZONE_CARD,
-    BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD,
-    BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD,
-    BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD,
-    BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD,
-    BIOME_TYPE_ICON_SIZE_IN_EXPLORATION_ZONE_CARD,
+    BIOME_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD,
+    BIOME_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD,
+    BIOME_ICON_SIZE_IN_BIOME_CARD,
+    BIOME_ICON_SIZE_IN_ENCOUNTER_CARD,
+    BIOME_ICON_SIZE_IN_EXPLORATION_ZONE_CARD,
     STRUGGLE_ICON_DISTANCE_FROM_BOTTOM,
     STRUGGLE_ICON_SIZE,
     draw_icon_in_absolute_center,
     draw_icons,
 )
-
-
-
-
 
 
 def prepare_to_draw_title(
@@ -65,9 +61,45 @@ def prepare_to_draw_title(
         draw_title(draw_title_parameters)
     except MissingTitleYCoordinateError as exception:
         raise MissingTitleYCoordinateError(
-            f"Failed to draw the title of the card from 'prepare_to_draw_title'. Error: {exception}"
+            f"Failed to draw the title of the card from 'prepare_to_draw_title'.\nError: {exception}"
         )
 
+
+class SavingCardFailedError(Exception):
+    pass
+
+
+
+def prepare_card_type_data(card_type):
+
+    card_type_data = None
+
+    if card_type == "encounter":
+        card_type_data = {
+            "font": ENCOUNTER_TITLE_FONT,
+            "title_y": ENCOUNTER_TITLE_Y,
+            "biome_icon_distance_from_bottom": BIOME_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD,
+            "biome_icon_size": BIOME_ICON_SIZE_IN_ENCOUNTER_CARD,
+        }
+    elif card_type == "biome":
+        card_type_data = {
+            "font": BIOME_TITLE_FONT,
+            "title_y": BIOME_TITLE_Y,
+            "biome_icon_distance_from_bottom": BIOME_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD,
+            "biome_icon_size": BIOME_ICON_SIZE_IN_BIOME_CARD,
+        }
+    elif card_type == "exploration_zone":
+        card_type_data = {"font": ENCOUNTER_TITLE_FONT, "title_y": BIOME_TITLE_Y}
+
+    # If card_type_data is still None, we haven't handled a card type.
+    if card_type_data is None:
+        raise UnhandledCardTypeException(f"Failed to prepare the data of a card type: the card type '{card_type}' hasn't been handled.")
+
+    return card_type_data
+
+
+class CardCreationFailedException(Exception):
+    pass
 
 def create_card(title, image_paths, card_type):
     """Creates a card given the passed title and the image paths.
@@ -79,6 +111,8 @@ def create_card(title, image_paths, card_type):
         The title of the card that will be created. It can be None, as in the case of card backs
     image_paths : dict
         All the paths to the images that will be drawn on the card
+    card_type : str
+        The type of the card, such as 'biome'
     """
 
     canvas_width, canvas_height = get_default_card_dimensions()
@@ -97,42 +131,33 @@ def create_card(title, image_paths, card_type):
     if "card_image_frame_path" in image_paths.keys():
         draw_card_frame(image_paths["card_image_frame_path"], card, canvas_width)
 
-    if card_type == "encounter":
-        card_type_data = {
-            "font": ENCOUNTER_TITLE_FONT,
-            "title_y": ENCOUNTER_TITLE_Y,
-            "biome_type_icon_distance_from_bottom": BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD,
-            "biome_type_icon_size": BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD
-        }
-    elif card_type == "biome":
-        card_type_data = {
-            "font": BIOME_TITLE_FONT,
-            "title_y": BIOME_TITLE_Y,
-            "biome_type_icon_distance_from_bottom": BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD,
-            "biome_type_icon_size": BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD
-        }
-    elif card_type == "exploration_zone":
-        card_type_data = {
-            "font": ENCOUNTER_TITLE_FONT,
-            "title_y": BIOME_TITLE_Y
-        }
+    try:
+        card_type_data = prepare_card_type_data(card_type)
+    except UnhandledCardTypeException as exception:
+        raise CardCreationFailedException(f"Failed to prepare the data of a card type from 'create_card'.\nError: {exception}")
 
     title_banner_path = None
 
     if "title_banner_path" in image_paths.keys():
         title_banner_path = image_paths["title_banner_path"]
 
-    if title is not None:
+    if card_type != "encounter_back" and card_type != "biome_back":
         prepare_to_draw_title(
-            title, title_banner_path, card_type_data["font"], card_type_data["title_y"], canvas_width, card, draw
+            title,
+            title_banner_path,
+            card_type_data["font"],
+            card_type_data["title_y"],
+            canvas_width,
+            card,
+            draw,
         )
 
-    if "biome_type_path" in image_paths.keys():
+    if "biome_icon_path" in image_paths.keys():
         draw_icons(
-            [image_paths["biome_type_path"]],
+            [image_paths["biome_icon_path"]],
             card,
-            card_type_data["biome_type_icon_size"],
-            canvas_height - card_type_data["biome_type_icon_distance_from_bottom"],
+            card_type_data["biome_icon_size"],
+            canvas_height - card_type_data["biome_icon_distance_from_bottom"],
             canvas_height,
             canvas_width,
         )
@@ -151,10 +176,10 @@ def create_card(title, image_paths, card_type):
         draw_icons(
             image_paths["biome_icon_paths"],
             card,
-            BIOME_TYPE_ICON_SIZE_IN_EXPLORATION_ZONE_CARD,
+            BIOME_ICON_SIZE_IN_EXPLORATION_ZONE_CARD,
             canvas_height - BIOME_ICONS_DISTANCE_FROM_BOTTOM_IN_EXPLORATION_ZONE_CARD,
             canvas_height,
-            canvas_width,            
+            canvas_width,
         )
 
     if "back_icon_path" in image_paths.keys():
@@ -169,4 +194,9 @@ def create_card(title, image_paths, card_type):
 
     apply_rounded_corners_to_card(card)
 
-    save_card_as_png(title, card, card_type)
+    try:
+        save_card_as_png(title, card, card_type)
+    except UnhandledCardTypeException as exception:
+        raise SavingCardFailedError(
+            f"From 'create_card', I was unable to save the card as a png file.\nError: {exception}"
+        )

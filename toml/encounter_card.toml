@@ -6,7 +6,7 @@ background_image_path = "raw_images/backgrounds/background_image.png"
 title_banner_path = "raw_images/banners/title_banner_2.png"
 card_image_path = "raw_images/encounters/beast_trees.png"
 card_image_frame_path = "raw_images/frames/frame.png"
-biome_type_path = "raw_images/icons/forest_icon.png"
+biome_icon_path = "raw_images/icons/forest_icon.png"
 
 
 [[paths.struggle_icon_paths]]

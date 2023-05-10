@@ -1,5 +1,7 @@
 import os
 
+from errors import UnhandledCardTypeException
+
 OUTPUT_DIRECTORY = "output"
 
 
@@ -26,6 +28,8 @@ def ensure_all_image_paths_exist(image_paths):
                     )
 
 
+
+
 def save_card_as_png(title, card, card_type):
     """Saves the card image as a PNG file
 
@@ -37,22 +41,24 @@ def save_card_as_png(title, card, card_type):
         The image that will get saved to a PNG file
     """
 
-    if card_type == "biome":
+    if card_type == "biome" or card_type == "biome_back":
         card_type_directory = "biomes"
     elif card_type == "encounter":
         card_type_directory = "encounters"
-    elif card_type == "exploration_zone":
+    elif card_type == "exploration_zone" or card_type == "exploration_zone_back":
         card_type_directory = "exploration_zones"
-    elif card_type == "exploration_zone_back":
-        card_type_directory = "exploration_zones"
-        title = "exploration_zone_back"
     else:
-        print(f"Failed to save a card to a file: can't handle card type '{card_type}'")
-        return
+        raise UnhandledCardTypeException(
+            f"Failed to save a card to a file: can't handle card type '{card_type}'"
+        )
 
     full_path = format(f"{OUTPUT_DIRECTORY}/{card_type_directory}")
 
     if not os.path.exists(full_path):
         os.makedirs(full_path)
 
-    card.save(f"{full_path}/{title}_card.png")
+    filename = f"{full_path}/{title}_card.png"
+
+    card.save(filename)
+
+    print(f"Card '{filename}' saved successfully.")

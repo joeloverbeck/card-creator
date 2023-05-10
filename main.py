@@ -2,7 +2,9 @@ import argparse
 from card_elements import MissingTitleYCoordinateError
 
 from card_setups import (
+    FailedToCreateCardException,
     setup_biome_card,
+    setup_biome_back_card,
     setup_encounter_card,
     setup_exploration_zone_card,
     setup_exploration_zone_back_card,
@@ -30,6 +32,8 @@ def main():
             setup_encounter_card()
         elif args.type_of_card == "biome":
             setup_biome_card()
+        elif args.type_of_card == "biome_back":
+            setup_biome_back_card()
         elif args.type_of_card == "exploration_zone":
             setup_exploration_zone_card()
         elif args.type_of_card == "exploration_zone_back":
@@ -37,12 +41,12 @@ def main():
         else:
             print(f"Not implemented for type of card '{args.type_of_card}'")
             return
-    except MissingTitleYCoordinateError as exception:
-        print(f"Failed to create a card from main. Error: {exception}")
+    except FailedToCreateCardException as exception:
+        print(f"Failed to create a card from main.\nError: {exception}")
         return
     except IncorrectImagePathException as exception:
         print(
-            f"Failed to create a card from main because some image path doesn't lead to an actual file. Error: {exception}"
+            f"Failed to create a card from main because some image path doesn't lead to an actual file.\nError: {exception}"
         )
         return
 
