@@ -27,13 +27,16 @@ from card_elements import (
     draw_title,
     get_default_card_dimensions,
 )
+from file_utils import check_file_exists
 from fonts import BIOME_TITLE_FONT, ENCOUNTER_TITLE_FONT
 from image_utils import (
     apply_rounded_corners_to_card,
 )
 from icons import (
-    BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM,
-    BIOME_TYPE_ICON_SIZE,
+    BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD,
+    BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD,
+    BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD,
+    BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD,
     STRUGGLE_ICON_DISTANCE_FROM_BOTTOM,
     STRUGGLE_ICON_SIZE,
     draw_icons,
@@ -89,6 +92,8 @@ def create_biome_card():
             f"Failed to create a card from 'create_biome_card'. Error: {exception}"
         )
 
+class IncorrectImagePathException(Exception):
+    pass
 
 def create_encounter_card():
     """Creates an encounter card"""
@@ -100,6 +105,7 @@ def create_encounter_card():
     # title_banner_path = encounter_data["paths"]["title_banner_path"]
     card_image_path = encounter_data["paths"]["card_image_path"]
     card_image_frame_path = encounter_data["paths"]["card_image_frame_path"]
+    biome_type_path = encounter_data["paths"]["biome_type_path"]
     struggle_icon_paths = [
         icon["value"] for icon in encounter_data["paths"]["struggle_icon_paths"]
     ]
@@ -109,8 +115,22 @@ def create_encounter_card():
         # "title_banner_path": title_banner_path,
         "card_image_path": card_image_path,
         "card_image_frame_path": card_image_frame_path,
+        "biome_type_path": biome_type_path,
         "struggle_icon_paths": struggle_icon_paths,
     }
+
+    for key, value in image_paths.items():
+        if key != "struggle_icon_paths":
+            if not check_file_exists(value):
+                raise IncorrectImagePathException(
+                    f"The file for '{key}' does not exist. Path: {value}"
+                )
+        else:
+            for index, icon_path in enumerate(value):
+                if not check_file_exists(icon_path):
+                    raise IncorrectImagePathException(
+                        f"The file for '{key}' at index {index} does not exist. Path: {icon_path}"
+                    )
 
     try:
         create_card(title, image_paths, "encounter")
@@ -151,9 +171,13 @@ def create_card(title, image_paths, card_type):
     if card_type == "encounter":
         font = ENCOUNTER_TITLE_FONT
         title_y = ENCOUNTER_TITLE_Y
+        biome_type_icon_distance_from_bottom = BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD
+        biome_type_icon_size = BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD
     elif card_type == "biome":
         font = BIOME_TITLE_FONT
         title_y = BIOME_TITLE_Y
+        biome_type_icon_distance_from_bottom = BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD
+        biome_type_icon_size = BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD
 
     title_banner_path = None
 
@@ -176,13 +200,13 @@ def create_card(title, image_paths, card_type):
         raise MissingTitleYCoordinateError(
             f"Failed to draw the title of the card from 'create_card'. Error: {exception}"
         )
-
+    
     if "biome_type_path" in image_paths.keys():
         draw_icons(
             [image_paths["biome_type_path"]],
             card,
-            BIOME_TYPE_ICON_SIZE,
-            canvas_height - BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM,
+            biome_type_icon_size,
+            canvas_height - biome_type_icon_distance_from_bottom,
             canvas_height,
             canvas_width,
         )

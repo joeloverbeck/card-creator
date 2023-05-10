@@ -1,11 +1,25 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 
-from image_utils import calculate_centered_x, convert_image_to_rgba
+from image_utils import calculate_centered_x, convert_image_to_rgba, create_shadow_mask
 
-BIOME_TYPE_ICON_SIZE = 200
+BIOME_TYPE_ICON_SIZE_IN_BIOME_CARD = 200
+BIOME_TYPE_ICON_SIZE_IN_ENCOUNTER_CARD = 100
 STRUGGLE_ICON_SIZE = 100
 STRUGGLE_ICON_DISTANCE_FROM_BOTTOM = 220
-BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM = 350
+BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_BIOME_CARD = 350
+BIOME_TYPE_ICON_DISTANCE_FROM_BOTTOM_IN_ENCOUNTER_CARD = 425
+
+
+def draw_shadow_for_icon(icon, starting_x, icons_y, card):
+    # Define the shadow parameters
+    shadow_offset = 2
+    shadow_opacity = 80  # Lower value for more subtle effect (0-255)
+
+    # Create the shadow mask
+    shadow_mask = create_shadow_mask(icon, shadow_offset, shadow_opacity)
+
+    # Draw the shadow
+    card.paste(shadow_mask, (starting_x + shadow_offset, icons_y + shadow_offset), shadow_mask)
 
 
 def draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card, gap=5):
@@ -14,8 +28,12 @@ def draw_row_of_icons(icon_paths, icon_size, starting_x, icons_y, card, gap=5):
 
         icon = convert_image_to_rgba(icon)
 
+        draw_shadow_for_icon(icon, starting_x, icons_y, card)
+
+        # Paste the icon on the card
         card.paste(icon, (starting_x, icons_y), icon)
-        starting_x += icon.width + gap  # Increment x-coordinate by icon width and gap
+
+        starting_x += icon.width + gap
 
 
 def calculate_total_width_of_icons_and_gap(icon_paths, icon_size, gap=5):

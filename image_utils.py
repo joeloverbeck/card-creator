@@ -11,7 +11,7 @@ functions:
     * load_card_image_frame - loads the frame for a card image
 """
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 
 ROUNDED_CORNER_RADIUS = 30
@@ -34,6 +34,23 @@ def convert_image_to_rgba(image):
         image = image.convert("RGBA")
 
     return image
+
+
+def create_shadow_mask(icon, shadow_offset, shadow_opacity):
+    # Create a black image with the same size as the icon
+    shadow_mask = Image.new("RGBA", icon.size, (0, 0, 0, 0))
+
+    # Set the alpha channel of the black image to match the icon's alpha channel
+    for x in range(icon.width):
+        for y in range(icon.height):
+            _, _, _, alpha = icon.getpixel((x, y))
+            if alpha > 0:
+                shadow_mask.putpixel((x, y), (0, 0, 0, shadow_opacity))
+
+    # Apply a blur effect to the shadow mask
+    shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(radius=shadow_offset))
+
+    return shadow_mask
 
 
 def create_mask_with_rounded_corners(width, height):
